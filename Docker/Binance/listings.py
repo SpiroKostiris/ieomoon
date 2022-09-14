@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import re
@@ -16,7 +17,10 @@ class BinanceListings():
     def __init__(self):
         # Binance webpage with different types of announcements
         self.base_url = 'https://www.binance.com'
-        self.chrome_ser = Service('C:\Program Files\Google\Chrome Beta\Application\chromedriver.exe')
+        if os.name == 'nt':
+            self.chrome_ser = Service('C:\Program Files\Google\Chrome Beta\Application\chromedriver.exe')
+        if os.name == 'posix':
+            self.chrome_ser = Service('./drivers/mac_chromedriver')
         self.options = webdriver.ChromeOptions()
         self.options.add_experimental_option("prefs", {"profile.default_content_setting.cookies": 2})
         self.cc_listings = dict()
@@ -41,7 +45,12 @@ class BinanceListings():
     # Iterate over each page in New CC Listing until a release date is older than or equal to now
     # Return a dictionary of newly found cryptocurrency pair releases and their release dates
     def future_cc_listing_releases(self):
-        self.driver = webdriver.Chrome(service=self.chrome_ser, options=self.options)
+        try:
+            self.driver = webdriver.Chrome(service=self.chrome_ser, options=self.options)
+        except Exception as e:
+            print(e)
+            os._exit(1)
+            
         self.driver.get(self.url_new_cc_listings())
         try:
             self.driver.find_element(By.XPATH, '//*[@id="onetrust-reject-all-handler"]').click()
