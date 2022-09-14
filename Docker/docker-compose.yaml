@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  binancelistings:
+    build: .
+    volumes:
+      - type: bind
+        source: .config.yaml
+        target: /opt/binancelistings/config.yaml
+        read_only: true
+
+volumes:
+  binancelistings:
+    name: binance_listings_vol
