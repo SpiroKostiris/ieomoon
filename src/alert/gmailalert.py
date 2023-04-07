@@ -1,12 +1,9 @@
 import smtplib, ssl
+from .alert import Alert
 
-class GmailAlert():
-    def __init__(self, sender, password, receiver):
-        self.smtp_server = 'smtp.gmail.com'
-        self.port = 465
-        self.sender = sender
-        self.password = password
-        self.receiver = receiver
+class GmailAlert(Alert):
+    def __init__(self, senderEmail, senderPassword, receiverEmail):
+        super().__init__('smtp.gmail.com', senderEmail, senderPassword, receiverEmail)
 
     def notify(self, tokens, release_date):
         subject = f'Subject: New Binance releases - {tokens}'

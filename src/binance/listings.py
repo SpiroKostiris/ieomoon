@@ -1,31 +1,39 @@
-import sys
 import time
 import re
 import urllib.request as urllib2
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import datetime
 from dateutil import parser
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 
 class BinanceListings():
 
     def __init__(self):
         # Binance webpage with different types of announcements
         self.base_url = 'https://www.binance.com'
-        self.chrome_ser = Service('C:\Program Files\Google\Chrome Beta\Application\chromedriver.exe')
-        self.options = webdriver.ChromeOptions()
-        self.options.add_experimental_option("prefs", {"profile.default_content_setting.cookies": 2})
         self.cc_listings = dict()
         self.future_releasedate = True
+        self.driver = None
+
+        chrome_service = ChromeService(ChromeDriverManager().install())
+        # chrome_service = Service('C:\Program Files\Google\Chrome\Application\chromedriver.exe')
+        options = webdriver.ChromeOptions()
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_experimental_option("prefs", {"profile.default_content_setting.cookies": 2})
+        try:
+            # self.driver = webdriver.Chrome(service=chrome_execpath, options=options)
+            self.driver = webdriver.Chrome(service=chrome_service, options=options)
+        except Exception as e:
+            print(f'ChromeDriver Error: {e}')
 
     # Scrape Binance announcements webpage and return the url for 'New Cryptocurreny Listing'
     def url_new_cc_listings(self):
         page = urllib2.urlopen(f'{self.base_url}/en/support/announcement/')
-
+        time.sleep(30)
         binance_ann = BeautifulSoup(page, 'html.parser')
         
         # Find element with child div containing our wanted title
@@ -41,7 +49,6 @@ class BinanceListings():
     # Iterate over each page in New CC Listing until a release date is older than or equal to now
     # Return a dictionary of newly found cryptocurrency pair releases and their release dates
     def future_cc_listing_releases(self):
-        self.driver = webdriver.Chrome(service=self.chrome_ser, options=self.options)
         self.driver.get(self.url_new_cc_listings())
         try:
             self.driver.find_element(By.XPATH, '//*[@id="onetrust-reject-all-handler"]').click()
@@ -63,7 +70,7 @@ class BinanceListings():
         
         accepted_listings = dict()
         for href, cc_vals in new_cc_listings.items():
-            if  cc_vals['release_date'] <= datetime.datetime.now(datetime.timezone.utc):
+            if cc_vals['release_date'] <= datetime.datetime.now(datetime.timezone.utc):
                 self.future_releasedate = False
                 break
             else:
